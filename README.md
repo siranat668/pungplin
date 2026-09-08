@@ -3,7 +3,7 @@
 สมุดบันทึกร้านอาหารของมุกกับเบย์ ปักหมุดบนแผนที่หรือแนบลิงก์ Google Maps
 ให้คะแนน 5 หัวข้อเป็นหัวใจ 1-5 ดวง แยกชุดคนละคนต่อการไปกินหนึ่งครั้ง
 
-Next.js 16 (App Router) + Supabase Postgres + MapLibre กับ OpenStreetMap deploy บน Vercel
+Next.js 16 (App Router) + Supabase Postgres + OpenLayers กับ OpenStreetMap deploy บน Vercel
 
 ## สถาปัตยกรรมสำคัญ
 
@@ -23,7 +23,9 @@ Next.js 16 (App Router) + Supabase Postgres + MapLibre กับ OpenStreetMap d
 2. เปิด SQL Editor แล้วรันไฟล์ [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) ทั้งไฟล์
 3. ไปที่ Project Settings เก็บสองค่านี้ไว้
    - Data API -> Project URL
-   - API Keys -> `service_role` (กดเปิดดูค่า)
+   - API Keys -> Secret keys (ค่าขึ้นต้นด้วย `sb_secret_` โปรเจกต์เก่าจะเรียกว่า `service_role`)
+
+   Publishable key (`sb_publishable_`) ไม่ต้องใช้ แอพนี้ไม่เคยคุยกับ Supabase จากฝั่งเบราว์เซอร์
 
 ### 2. รันบนเครื่องตัวเอง
 
@@ -76,6 +78,17 @@ update visits set deleted_at = null where id = '...';
 
 **Supabase free tier หยุดโปรเจกต์** ถ้าไม่มี request เข้าฐานข้อมูลเลย 7 วัน
 [vercel.json](vercel.json) ตั้ง cron ให้เรียก `/api/cron/keepalive` วันละครั้งเพื่อกันเรื่องนี้
+
+**ลิงก์ Google Maps ให้ได้แค่พิกัด ชื่อร้าน และที่อยู่** ไม่มีรูปหน้าร้าน
+หน้าเว็บของ Google ส่ง `og:image` มาเป็นภาพแผนที่กลางๆ ที่ผูกกับ API key ของ Google เอง
+และ `og:title` เป็นคำว่า "Google Maps" เฉยๆ จะได้รูปจริงต้องใช้ Places API ที่คิดเงินรายครั้ง
+เลยใช้ภาพแผนที่จาก OpenStreetMap เป็นภาพประกอบร้านแทน ดู [components/MapThumb.tsx](components/MapThumb.tsx)
+ส่วนที่อยู่ได้มาจากการถาม Nominatim ย้อนพิกัด ไม่ได้มาจาก Google
+
+**หน้าใหม่ที่มี component ฝั่ง client ต้องเป็น dynamic** CSP ของแอพใช้ nonce ที่สุ่มใหม่ทุก request
+หน้าที่ Next.js เอาไป prerender เป็น static ตอน build จะไม่มี nonce ติดใน HTML แล้วสคริปต์
+ฝั่ง client ของหน้านั้นจะถูกบล็อกเงียบๆ ทั้งหมด ตอนนี้ทุกหน้าอ่านคุกกี้ผู้ใช้อยู่แล้วจึงเป็น dynamic หมด
+ถ้าเพิ่มหน้าที่ไม่แตะข้อมูลผู้ใช้ ต้องใส่ `export const dynamic = "force-dynamic"` ให้หน้านั้นด้วย
 
 ## คำสั่ง
 

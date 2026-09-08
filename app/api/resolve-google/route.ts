@@ -1,5 +1,6 @@
 import { allowRequest } from "@/lib/ratelimit";
 import { resolveGoogleMapsUrl } from "@/lib/google-maps";
+import { reverseAddress } from "@/lib/nominatim";
 import { resolveGoogleSchema } from "@/lib/schemas";
 
 /**
@@ -31,7 +32,10 @@ export async function POST(request: Request) {
 
   try {
     const place = await resolveGoogleMapsUrl(parsed.data.url);
-    return Response.json({ place });
+    // ลิงก์ Google ไม่มีที่อยู่ติดมา ถามที่อยู่จากพิกัดผ่าน OSM ให้เป็นของแถม
+    // ถ้าถามไม่ได้ก็ปล่อยเป็น null ผู้ใช้พิมพ์เองได้
+    const address = await reverseAddress(place.lat, place.lng);
+    return Response.json({ place: { ...place, address } });
   } catch (error) {
     const message =
       error instanceof Error && error.message

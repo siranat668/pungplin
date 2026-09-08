@@ -134,7 +134,7 @@ export function VisitForm({
                     <label
                       key={level.value}
                       title={level.hint}
-                      className="flex-1 cursor-pointer rounded-xl border border-line bg-raised py-2 text-center text-sm has-[:checked]:border-yolk has-[:checked]:text-yolk has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-yolk"
+                      className="flex-1 cursor-pointer rounded-xl border border-line bg-raised py-2 text-center text-sm has-[:checked]:border-yolk has-[:checked]:bg-yolk/20 has-[:checked]:font-bold has-[:checked]:text-yolk-deep has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-yolk"
                     >
                       <input
                         type="radio"

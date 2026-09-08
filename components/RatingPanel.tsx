@@ -12,8 +12,8 @@ import { averageOfRating } from "@/lib/scores";
 import type { RatingRow } from "@/lib/types";
 
 const ACCENT: Record<Person, string> = {
-  mook: "text-bubble",
-  bay: "text-yolk",
+  mook: "text-bubble-deep",
+  bay: "text-yolk-deep",
 };
 
 export function RatingPanel({

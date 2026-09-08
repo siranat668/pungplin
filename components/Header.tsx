@@ -12,17 +12,11 @@ const PERSON_DOT: Record<Person, string> = {
 
 export function Header({ person }: { person: Person }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-ink/85 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-line bg-page/85 backdrop-blur">
       <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
         <Link href="/feed" className="flex items-center gap-2">
-          <Image
-            src="/logo.jpg"
-            alt=""
-            width={64}
-            height={64}
-            className="h-9 w-9 rounded-xl border border-line object-cover"
-          />
-          <span className="text-lg font-bold text-yolk">พุงปลิ้น</span>
+          <Image src="/logo.png" alt="" width={80} height={80} className="h-9 w-9 object-contain" />
+          <span className="text-lg font-bold text-yolk-deep">พุงปลิ้น</span>
         </Link>
 
         <nav className="flex items-center gap-1">
@@ -34,7 +28,7 @@ export function Header({ person }: { person: Person }) {
           <form action={switchPerson}>
             <button
               type="submit"
-              className="chip hover:text-cream"
+              className="chip hover:text-ink"
               title="เปลี่ยนเป็นอีกคน"
             >
               <span

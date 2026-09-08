@@ -1,45 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { MapLibreMap, MapMouseEvent, Marker } from "maplibre-gl";
+import type OlFeature from "ol/Feature";
+import type OlMap from "ol/Map";
+import type Point from "ol/geom/Point";
 
-import "maplibre-gl/dist/maplibre-gl.css";
+import "ol/ol.css";
 
-import { DEFAULT_MAP_CENTER } from "@/lib/constants";
+import { DEFAULT_MAP_CENTER, OSM_TILE_URL } from "@/lib/constants";
 
 export type Coords = { lat: number; lng: number };
-
-/**
- * สไตล์แผนที่แบบ raster ที่ชี้ไปยัง tile ของ OpenStreetMap โดยตรง
- * ไม่ต้องมี API key ไม่ต้องผูกบัตร จึงไม่มีทางเจอบิลบานปลายแบบ Google Maps
- */
-const OSM_STYLE = {
-  version: 8 as const,
-  sources: {
-    osm: {
-      type: "raster" as const,
-      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-      tileSize: 256,
-      maxzoom: 19,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    },
-  },
-  layers: [{ id: "osm", type: "raster" as const, source: "osm" }],
-};
-
-function createPinElement(): HTMLDivElement {
-  const pin = document.createElement("div");
-  pin.style.cssText = [
-    "width:22px",
-    "height:22px",
-    "border-radius:999px",
-    "background:var(--color-yolk)",
-    "border:3px solid var(--color-ink)",
-    "box-shadow:0 0 0 3px rgba(255,200,0,.35)",
-    "cursor:grab",
-  ].join(";");
-  return pin;
-}
 
 export function MapPicker({
   value,
@@ -51,9 +21,12 @@ export function MapPicker({
   height?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<MapLibreMap | null>(null);
-  const markerRef = useRef<Marker | null>(null);
+  const mapRef = useRef<OlMap | null>(null);
   const onChangeRef = useRef(onChange);
+  /** ย้ายหมุดไปพิกัดใหม่ ตัวฟังก์ชันสร้างตอนโหลด OpenLayers เสร็จ */
+  const applyRef = useRef<((coords: Coords) => void) | null>(null);
+  /** true เมื่อพิกัดที่เพิ่งเปลี่ยนมาจากการแตะหรือลากบนแผนที่นี้เอง */
+  const localEditRef = useRef(false);
   const [locating, setLocating] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -66,66 +39,138 @@ export function MapPicker({
   useEffect(() => {
     let cancelled = false;
 
-    // โหลด maplibre ตอน effect ทำงานเท่านั้น ไลบรารีนี้แตะ window ตั้งแต่ตอน import
+    // โหลด OpenLayers ตอน effect ทำงานเท่านั้น โมดูลของมันแตะ document ตั้งแต่ตอน import
     // ถ้า import ไว้บนสุดของไฟล์ การ render ฝั่ง server จะพัง
     void (async () => {
-      const maplibregl = await import("maplibre-gl");
+      const [
+        { default: Map },
+        { default: View },
+        { default: TileLayer },
+        { default: OSM },
+        { default: VectorLayer },
+        { default: VectorSource },
+        { default: Feature },
+        { default: PointGeometry },
+        { default: Translate },
+        { fromLonLat, toLonLat },
+        { Circle: CircleStyle, Fill, Stroke, Style },
+      ] = await Promise.all([
+        import("ol/Map"),
+        import("ol/View"),
+        import("ol/layer/Tile"),
+        import("ol/source/OSM"),
+        import("ol/layer/Vector"),
+        import("ol/source/Vector"),
+        import("ol/Feature"),
+        import("ol/geom/Point"),
+        import("ol/interaction/Translate"),
+        import("ol/proj"),
+        import("ol/style"),
+      ]);
+
       if (cancelled || !containerRef.current || mapRef.current) return;
 
       const start = value ?? DEFAULT_MAP_CENTER;
-      const map = new maplibregl.Map({
-        container: containerRef.current,
-        style: OSM_STYLE,
-        center: [start.lng, start.lat],
-        zoom: value ? 16 : 11,
-        attributionControl: { compact: true },
+      const source = new VectorSource();
+      const pin: OlFeature<Point> = new Feature(
+        new PointGeometry(fromLonLat([start.lng, start.lat])),
+      );
+      // ยังไม่ปักหมุดก็ยังไม่ต้องมีจุดบนแผนที่ ให้เห็นว่าช่องนี้ยังว่าง
+      if (value) source.addFeature(pin);
+
+      const pinLayer = new VectorLayer({
+        source,
+        style: new Style({
+          image: new CircleStyle({
+            radius: 10,
+            fill: new Fill({ color: "#ffc800" }),
+            stroke: new Stroke({ color: "#2a2620", width: 3 }),
+          }),
+        }),
       });
 
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-
-      const marker = new maplibregl.Marker({
-        element: createPinElement(),
-        draggable: true,
+      const map = new Map({
+        target: containerRef.current,
+        layers: [new TileLayer({ source: new OSM({ url: OSM_TILE_URL }) }), pinLayer],
+        view: new View({
+          center: fromLonLat([start.lng, start.lat]),
+          zoom: value ? 16 : 11,
+          maxZoom: 19,
+        }),
       });
 
-      marker.on("dragend", () => {
-        const { lat, lng } = marker.getLngLat();
-        onChangeRef.current({ lat, lng });
+      function report(coords: Coords) {
+        localEditRef.current = true;
+        onChangeRef.current(coords);
+      }
+
+      map.on("click", (event) => {
+        const [lng, lat] = toLonLat(event.coordinate);
+        report({ lat, lng });
       });
 
-      map.on("click", (event: MapMouseEvent) => {
-        onChangeRef.current({ lat: event.lngLat.lat, lng: event.lngLat.lng });
+      const translate = new Translate({ layers: [pinLayer] });
+      translate.on("translateend", () => {
+        const coordinate = pin.getGeometry()?.getCoordinates();
+        if (!coordinate) return;
+        const [lng, lat] = toLonLat(coordinate);
+        report({ lat, lng });
+      });
+      map.addInteraction(translate);
+
+      map.on("pointermove", (event) => {
+        if (event.dragging) return;
+        const target = map.getTargetElement();
+        if (target) target.style.cursor = map.hasFeatureAtPixel(event.pixel) ? "grab" : "crosshair";
       });
 
-      if (value) marker.setLngLat([value.lng, value.lat]).addTo(map);
+      applyRef.current = (coords) => {
+        const center = fromLonLat([coords.lng, coords.lat]);
+        pin.getGeometry()?.setCoordinates(center);
+        if (source.getFeatures().length === 0) source.addFeature(pin);
+
+        // ถ้าผู้ใช้เพิ่งแตะหรือลากเอง อย่าไปเลื่อนแผนที่ใต้มือเขา
+        // เลื่อนเฉพาะตอนพิกัดมาจากที่อื่น เช่น หลังแกะลิงก์ Google หรือเลือกผลค้นหา
+        if (localEditRef.current) {
+          localEditRef.current = false;
+          return;
+        }
+
+        const view = map.getView();
+        const current = view.getCenter();
+        const [lng, lat] = current ? toLonLat(current) : [Number.NaN, Number.NaN];
+        const moved =
+          !Number.isFinite(lat) ||
+          Math.abs(lat - coords.lat) > 0.0005 ||
+          Math.abs(lng - coords.lng) > 0.0005;
+        if (moved) {
+          view.animate({
+            center,
+            zoom: Math.max(view.getZoom() ?? 16, 16),
+            duration: 300,
+          });
+        }
+      };
 
       mapRef.current = map;
-      markerRef.current = marker;
       setReady(true);
     })();
 
     return () => {
       cancelled = true;
-      mapRef.current?.remove();
+      applyRef.current = null;
+      mapRef.current?.setTarget(undefined);
+      mapRef.current?.dispose();
       mapRef.current = null;
-      markerRef.current = null;
     };
     // ตั้งใจให้รันครั้งเดียว ตำแหน่งเริ่มต้นอ่านตอน mount ส่วนการอัปเดตอยู่ใน effect ถัดไป
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ซิงก์หมุดเมื่อพิกัดถูกเปลี่ยนจากที่อื่น เช่น หลังแกะลิงก์ Google หรือเลือกผลค้นหา
+  // ซิงก์หมุดเมื่อพิกัดถูกเปลี่ยนจากที่อื่น
   useEffect(() => {
-    const map = mapRef.current;
-    const marker = markerRef.current;
-    if (!ready || !map || !marker || !value) return;
-
-    marker.setLngLat([value.lng, value.lat]).addTo(map);
-
-    const center = map.getCenter();
-    const moved =
-      Math.abs(center.lat - value.lat) > 0.0005 || Math.abs(center.lng - value.lng) > 0.0005;
-    if (moved) map.easeTo({ center: [value.lng, value.lat], zoom: Math.max(map.getZoom(), 16) });
+    if (!ready || !value) return;
+    applyRef.current?.(value);
   }, [ready, value]);
 
   function useCurrentLocation() {

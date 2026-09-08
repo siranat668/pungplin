@@ -59,3 +59,12 @@ export const CUISINE_SUGGESTIONS = [
 
 /** กรุงเทพเป็นจุดเริ่มต้นของแผนที่เมื่อยังไม่มีหมุด */
 export const DEFAULT_MAP_CENTER = { lat: 13.7563, lng: 100.5018 };
+
+/**
+ * tile ของ OpenStreetMap ใช้ฟรี ไม่ต้องมี API key ไม่ต้องผูกบัตร
+ * จึงไม่มีทางเจอบิลบานปลายแบบ Google Maps
+ *
+ * โดเมนนี้ต้องตรงกับที่อนุญาตไว้ใน img-src ของ CSP ในไฟล์ proxy.ts
+ * ถ้าย้ายไปใช้ tile เจ้าอื่น ต้องไปแก้ที่นั่นด้วยไม่งั้นแผนที่จะขึ้นเป็นสีเทาเปล่าๆ
+ */
+export const OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";

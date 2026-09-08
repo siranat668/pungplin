@@ -1,36 +1,38 @@
 @import "tailwindcss";
 
-/* พาเลตต์ดึงมาจากโลโก้: เหลืองไข่, ชมพูหมากฝรั่ง, หัวใจแดง บนพื้นเกือบดำ */
+/* พาเลตต์ดึงมาจากโลโก้: เหลืองไข่, ชมพูหมากฝรั่ง, หัวใจแดง วางบนพื้นขาวอมครีม
+   สีคู่ *-deep คือเวอร์ชันเข้มของสีเดียวกัน เอาไว้ใช้กับตัวอักษรบนพื้นขาว
+   เพราะเหลืองกับชมพูสดๆ คอนทราสต์ไม่ถึงเกณฑ์ อ่านบนจอกลางแดดไม่ออก */
 @theme {
-  --color-ink: #0b0b10;
-  --color-surface: #16161f;
-  --color-raised: #1f1f2b;
-  --color-line: #2e2e3d;
-  --color-cream: #f7f4ec;
-  --color-muted: #9694a8;
+  --color-page: #fffdf8;
+  --color-surface: #ffffff;
+  --color-raised: #f7f3e9;
+  --color-line: #e8e2d4;
+  --color-ink: #2a2620;
+  --color-muted: #7a7263;
   --color-yolk: #ffc800;
-  --color-yolk-soft: #ffe486;
+  --color-yolk-deep: #9c6b00;
   --color-bubble: #ff6fa8;
-  --color-bubble-soft: #ffb8d4;
-  --color-heart: #f43f5e;
-  --color-leaf: #4ade80;
+  --color-bubble-deep: #c2185b;
+  --color-heart: #e11d48;
+  --color-leaf: #15803d;
 
   --font-sans: var(--font-thai), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-display), var(--font-thai), ui-sans-serif, sans-serif;
 }
 
 html {
-  color-scheme: dark;
-  background-color: var(--color-ink);
+  color-scheme: light;
+  background-color: var(--color-page);
 }
 
 body {
-  background-color: var(--color-ink);
-  color: var(--color-cream);
-  /* จุดวงกลมจางๆ ให้พื้นไม่ตายสนิท */
+  background-color: var(--color-page);
+  color: var(--color-ink);
+  /* แต้มสีจากโลโก้จางๆ ที่มุมบน ให้พื้นขาวไม่โล่งจนดูเหมือนหน้าเว็บยังโหลดไม่เสร็จ */
   background-image:
-    radial-gradient(circle at 12% -10%, rgba(255, 200, 0, 0.09), transparent 45%),
-    radial-gradient(circle at 88% 0%, rgba(255, 111, 168, 0.09), transparent 45%);
+    radial-gradient(circle at 12% -10%, rgba(255, 200, 0, 0.16), transparent 45%),
+    radial-gradient(circle at 88% 0%, rgba(255, 111, 168, 0.14), transparent 45%);
   background-attachment: fixed;
 }
 
@@ -48,10 +50,12 @@ h3 {
 }
 
 @layer components {
+  /* การ์ดขาวบนพื้นขาว ถ้าใช้แค่เส้นขอบมันจะจมหายไปกับพื้น ต้องมีเงาช่วยยกขึ้นมา */
   .card {
     border-radius: 1.5rem;
     border: 1px solid var(--color-line);
     background-color: var(--color-surface);
+    box-shadow: 0 1px 2px rgba(42, 38, 32, 0.04), 0 6px 16px -12px rgba(42, 38, 32, 0.18);
   }
 
   .field-label {
@@ -59,7 +63,7 @@ h3 {
     margin-bottom: 0.375rem;
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--color-cream);
+    color: var(--color-ink);
   }
 
   .field-input {
@@ -68,7 +72,7 @@ h3 {
     border: 1px solid var(--color-line);
     background-color: var(--color-raised);
     padding: 0.625rem 0.875rem;
-    color: var(--color-cream);
+    color: var(--color-ink);
     outline: none;
   }
 
@@ -78,7 +82,8 @@ h3 {
 
   .field-input:focus {
     border-color: var(--color-yolk);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-yolk) 25%, transparent);
+    background-color: var(--color-surface);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-yolk) 35%, transparent);
   }
 
   .field-error {
@@ -99,7 +104,7 @@ h3 {
   }
 
   .btn:hover:not(:disabled) {
-    filter: brightness(1.08);
+    filter: brightness(0.96);
   }
 
   .btn:active:not(:disabled) {
@@ -114,12 +119,13 @@ h3 {
   .btn-primary {
     background-color: var(--color-yolk);
     color: var(--color-ink);
+    box-shadow: 0 2px 6px -2px rgba(156, 107, 0, 0.5);
   }
 
   .btn-secondary {
     border: 1px solid var(--color-line);
-    background-color: var(--color-raised);
-    color: var(--color-cream);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
   }
 
   .btn-ghost {
@@ -127,7 +133,7 @@ h3 {
   }
 
   .btn-ghost:hover {
-    color: var(--color-cream);
+    color: var(--color-ink);
   }
 
   .chip {
@@ -136,25 +142,38 @@ h3 {
     gap: 0.25rem;
     border-radius: 999px;
     border: 1px solid var(--color-line);
-    background-color: var(--color-raised);
+    background-color: var(--color-surface);
     padding: 0.125rem 0.625rem;
     font-size: 0.8125rem;
     color: var(--color-muted);
   }
 }
 
-/* แผนที่ OSM เป็นภาพสว่าง หรี่ลงหน่อยให้เข้ากับธีมมืด
-   ใส่ที่ canvas อย่างเดียว หมุดกับป้ายเป็น DOM ข้างนอกจึงยังสีสดเหมือนเดิม */
-.maplibregl-canvas {
-  filter: brightness(0.82) saturate(0.85) contrast(1.05);
+/* ปุ่มควบคุมของ OpenLayers มาเป็นสีน้ำเงินเข้มตามค่าเริ่มต้น ทาสีใหม่ให้เข้ากับธีม */
+.ol-control button {
+  background-color: color-mix(in oklab, var(--color-surface) 85%, transparent) !important;
+  color: var(--color-ink) !important;
+  border: 1px solid var(--color-line);
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
-.maplibregl-ctrl-attrib {
+.ol-control button:hover,
+.ol-control button:focus {
+  background-color: var(--color-yolk) !important;
+}
+
+.ol-attribution {
   font-size: 10px;
 }
 
-.maplibregl-ctrl-attrib,
-.maplibregl-ctrl-attrib a {
-  background-color: rgba(11, 11, 16, 0.7) !important;
-  color: var(--color-muted) !important;
+.ol-attribution a {
+  color: var(--color-yolk-deep);
+}
+
+/* กรอบโฟกัสของ OpenLayers เป็นสีน้ำเงิน ทับด้วยเหลืองของเรา */
+.ol-viewport:focus-visible,
+.ol-control button:focus-visible {
+  outline: 2px solid var(--color-yolk);
+  outline-offset: 1px;
 }

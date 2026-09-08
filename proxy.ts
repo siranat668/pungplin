@@ -9,6 +9,12 @@ import { NextResponse, type NextRequest } from "next/server";
  *
  * ไฟล์นี้ (เดิมชื่อ middleware.ts ก่อน Next.js 16) คือจุดเดียวที่ต้องแก้
  * ถ้าวันไหนอยากเพิ่ม passcode กันคนนอก แค่เช็คคุกกี้ตรงนี้แล้ว redirect ไปหน้าใส่รหัส
+ *
+ * ข้อควรระวังเวลาเพิ่มหน้าใหม่: nonce เกิดตอนมี request เข้ามา หน้าที่ Next.js
+ * เอาไป prerender เป็น static ตอน build จึงไม่มี nonce ติดใน HTML และสคริปต์
+ * ฝั่ง client ของหน้านั้นจะถูกบล็อกทั้งหมดแบบเงียบๆ ตอนนี้ทุกหน้าของแอพอ่านคุกกี้
+ * ผู้ใช้อยู่แล้วจึงเป็น dynamic หมด ถ้าเพิ่มหน้าที่ไม่แตะข้อมูลผู้ใช้และมี component
+ * ฝั่ง client ต้องใส่ `export const dynamic = "force-dynamic"` ให้หน้านั้นด้วย
  */
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
@@ -22,11 +28,9 @@ export function proxy(request: NextRequest) {
     // React เรนเดอร์ style={{...}} ออกมาเป็น attribute style="" ตอน SSR
     // nonce ใช้กับ attribute ไม่ได้ ต้องอนุญาตแยกที่ style-src-attr
     "style-src-attr 'unsafe-inline'",
-    "img-src 'self' blob: data: https://tile.openstreetmap.org",
-    "connect-src 'self' https://tile.openstreetmap.org",
-    // MapLibre สร้าง web worker จาก blob URL
-    "worker-src 'self' blob:",
-    "child-src 'self' blob:",
+    // tile ของแผนที่โหลดมาเป็น <img> โดเมนนี้ต้องตรงกับ OSM_TILE_URL ใน lib/constants.ts
+    "img-src 'self' data: https://tile.openstreetmap.org",
+    "connect-src 'self'",
     "font-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",

@@ -11,7 +11,7 @@ export function NavLink({ href, label }: { href: string; label: string }) {
     <Link
       href={href}
       className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
-        active ? "bg-raised text-yolk" : "text-muted hover:text-cream"
+        active ? "bg-raised text-yolk-deep" : "text-muted hover:text-ink"
       }`}
     >
       {label}

@@ -44,7 +44,7 @@ export default async function VisitPage({ params }: PageProps<"/visit/[id]">) {
   return (
     <div className="space-y-5">
       <div>
-        <Link href="/feed" className="text-sm text-muted hover:text-cream">
+        <Link href="/feed" className="text-sm text-muted hover:text-ink">
           กลับไปหน้าบันทึก
         </Link>
 
@@ -72,14 +72,17 @@ export default async function VisitPage({ params }: PageProps<"/visit/[id]">) {
               href={directions}
               target="_blank"
               rel="noreferrer noopener"
-              className="text-yolk hover:underline"
+              className="font-semibold text-yolk-deep hover:underline"
             >
               เปิดใน Google Maps
             </a>
           ) : (
             <span className="text-muted">ยังไม่ได้ปักหมุด</span>
           )}
-          <Link href={`/restaurant/${restaurant.id}`} className="text-yolk hover:underline">
+          <Link
+            href={`/restaurant/${restaurant.id}`}
+            className="font-semibold text-yolk-deep hover:underline"
+          >
             ดูทุกครั้งที่ไปร้านนี้
           </Link>
         </div>

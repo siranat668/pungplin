@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DangerButton } from "@/components/DangerButton";
+import { MapThumb } from "@/components/MapThumb";
 import { RestaurantEditForm } from "@/components/RestaurantEditForm";
 import { ScoreBadge } from "@/components/ScoreBadge";
 import { VisitCard } from "@/components/VisitCard";
@@ -50,7 +51,7 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurant/
   return (
     <div className="space-y-5">
       <div>
-        <Link href="/feed" className="text-sm text-muted hover:text-cream">
+        <Link href="/feed" className="text-sm text-muted hover:text-ink">
           กลับไปหน้าบันทึก
         </Link>
 
@@ -70,6 +71,25 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurant/
           {price ? <span className="chip">{price.label}</span> : null}
         </div>
       </div>
+
+      {restaurant.lat !== null && restaurant.lng !== null ? (
+        <section className="space-y-2">
+          <MapThumb lat={restaurant.lat} lng={restaurant.lng} />
+          <div className="flex flex-wrap items-center justify-between gap-x-3 text-sm">
+            <span className="text-muted">{restaurant.address ?? "ยังไม่ได้ใส่ที่อยู่"}</span>
+            {restaurant.google_url ? (
+              <a
+                href={restaurant.google_url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="font-semibold text-yolk-deep hover:underline"
+              >
+                เปิดใน Google Maps
+              </a>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
       {allRatings.length > 0 ? (
         <section className="card p-4">

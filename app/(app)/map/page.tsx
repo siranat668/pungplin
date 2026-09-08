@@ -62,7 +62,7 @@ export default async function MapPage() {
               <li key={restaurant.id} className="flex items-center justify-between gap-3 py-2">
                 <Link
                   href={`/restaurant/${restaurant.id}`}
-                  className="min-w-0 flex-1 truncate text-sm hover:text-yolk"
+                  className="min-w-0 flex-1 truncate text-sm hover:text-yolk-deep"
                 >
                   {restaurant.name}
                 </Link>

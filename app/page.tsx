@@ -18,15 +18,15 @@ export default async function ChoosePersonPage({ searchParams }: PageProps<"/">)
     <main className="flex flex-1 items-center justify-center px-5 py-12">
       <div className="w-full max-w-sm text-center">
         <Image
-          src="/logo.jpg"
+          src="/logo.png"
           alt="พุงปลิ้น"
-          width={512}
-          height={512}
+          width={640}
+          height={640}
           priority
-          className="mx-auto h-44 w-44 rounded-[2rem] border border-line object-cover shadow-2xl"
+          className="mx-auto h-44 w-44 object-contain drop-shadow-lg"
         />
 
-        <h1 className="mt-7 text-3xl font-bold text-yolk">พุงปลิ้น</h1>
+        <h1 className="mt-5 text-3xl font-bold text-yolk-deep">พุงปลิ้น</h1>
         <p className="mt-1 text-sm text-muted">สมุดบันทึกร้านอาหารของมุกกับเบย์</p>
 
         <p className="mt-9 mb-4 text-base font-semibold">วันนี้ใครเป็นคนจด</p>
@@ -49,7 +49,7 @@ export default async function ChoosePersonPage({ searchParams }: PageProps<"/">)
         {current ? (
           <p className="mt-6 text-sm text-muted">
             ครั้งก่อนเข้ามาเป็น{" "}
-            <span className="font-semibold text-cream">{PERSON_LABEL[current]}</span>
+            <span className="font-semibold text-ink">{PERSON_LABEL[current]}</span>
           </p>
         ) : null}
       </div>

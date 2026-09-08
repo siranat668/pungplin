@@ -100,11 +100,30 @@ export function LocationPicker({
         return;
       }
 
-      const place = data.place as { lat: number; lng: number; name: string | null };
-      onChange({ ...value, coords: { lat: place.lat, lng: place.lng } });
+      const place = data.place as {
+        lat: number;
+        lng: number;
+        name: string | null;
+        address: string | null;
+      };
+
+      // ที่อยู่ที่พิมพ์เองไว้แล้วสำคัญกว่าที่ระบบเดาให้ เลยเติมเฉพาะตอนช่องยังว่าง
+      const filledAddress = !value.address.trim() && place.address ? place.address : null;
+
+      onChange({
+        ...value,
+        coords: { lat: place.lat, lng: place.lng },
+        address: filledAddress ?? value.address,
+      });
       if (place.name) onSuggestName?.(place.name);
+
       setLinkNote(
-        place.name ? `เจอแล้ว: ${place.name}` : "เจอพิกัดแล้ว ดูหมุดบนแผนที่ด้านล่าง",
+        [
+          place.name ? `เจอชื่อร้าน ${place.name}` : "เจอพิกัดแล้ว ดูหมุดบนแผนที่ด้านล่าง",
+          filledAddress ? "เติมที่อยู่ให้แล้ว แก้ได้" : null,
+        ]
+          .filter(Boolean)
+          .join(" · "),
       );
     } catch {
       setLinkError("แกะลิงก์ไม่สำเร็จ ลองใหม่อีกครั้ง");
@@ -119,9 +138,43 @@ export function LocationPicker({
       <input type="hidden" name="lat" value={value.coords?.lat ?? ""} />
       <input type="hidden" name="lng" value={value.coords?.lng ?? ""} />
 
+      {/* ลิงก์ Google เป็นทางหลัก เพราะเป็นสิ่งที่คนกดแชร์มาจากมือถืออยู่แล้ว
+          และแกะได้ทั้งพิกัด ชื่อร้าน และที่อยู่ในทีเดียว */}
+      <div>
+        <label className="field-label" htmlFor="google_url">
+          วางลิงก์จาก Google Maps
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="google_url"
+            name="google_url"
+            type="url"
+            inputMode="url"
+            value={value.googleUrl}
+            onChange={(event) => onChange({ ...value, googleUrl: event.target.value })}
+            placeholder="https://maps.app.goo.gl/..."
+            className="field-input"
+          />
+          <button
+            type="button"
+            onClick={() => void resolveGoogleLink()}
+            disabled={resolving}
+            className="btn btn-secondary shrink-0"
+          >
+            {resolving ? "กำลังแกะ" : "แกะข้อมูล"}
+          </button>
+        </div>
+        <p className="mt-1 text-xs text-muted">
+          กดแชร์ในแอพ Google Maps แล้วคัดลอกลิงก์มาวาง ระบบจะแกะพิกัด ชื่อร้าน และที่อยู่ให้เอง
+        </p>
+        {errors?.google_url ? <p className="field-error">{errors.google_url}</p> : null}
+        {linkError ? <p className="field-error">{linkError}</p> : null}
+        {linkNote ? <p className="mt-1 text-sm text-leaf">{linkNote}</p> : null}
+      </div>
+
       <div>
         <label className="field-label" htmlFor="place-search">
-          ค้นหาชื่อร้านหรือที่อยู่
+          หรือค้นหาชื่อร้านเอง
         </label>
         <div className="flex gap-2">
           <input
@@ -166,35 +219,6 @@ export function LocationPicker({
             ))}
           </ul>
         ) : null}
-      </div>
-
-      <div>
-        <label className="field-label" htmlFor="google_url">
-          หรือวางลิงก์ Google Maps
-        </label>
-        <div className="flex gap-2">
-          <input
-            id="google_url"
-            name="google_url"
-            type="url"
-            inputMode="url"
-            value={value.googleUrl}
-            onChange={(event) => onChange({ ...value, googleUrl: event.target.value })}
-            placeholder="https://maps.app.goo.gl/..."
-            className="field-input"
-          />
-          <button
-            type="button"
-            onClick={() => void resolveGoogleLink()}
-            disabled={resolving}
-            className="btn btn-secondary shrink-0"
-          >
-            {resolving ? "กำลังแกะ" : "แกะพิกัด"}
-          </button>
-        </div>
-        {errors?.google_url ? <p className="field-error">{errors.google_url}</p> : null}
-        {linkError ? <p className="field-error">{linkError}</p> : null}
-        {linkNote ? <p className="mt-1 text-sm text-leaf">{linkNote}</p> : null}
       </div>
 
       <MapPicker
