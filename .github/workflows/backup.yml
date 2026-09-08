@@ -1,0 +1,55 @@
+name: สำรองฐานข้อมูลรายคืน
+
+# Supabase free tier ไม่มีระบบสำรองข้อมูลอัตโนมัติให้เลย
+# ถ้าข้อมูลหาย ไม่ว่าจะเพราะกดลบผิดหรือมีคนแปลกหน้าเข้ามาลบ ก็คือหายถาวร
+# workflow นี้ดัมป์ฐานข้อมูลทั้งก้อนเก็บเป็น artifact ทุกคืน
+#
+# ต้องตั้ง secret ชื่อ SUPABASE_DB_URL ที่ Settings -> Secrets and variables -> Actions
+# ค่าเอามาจาก Supabase -> Project Settings -> Database -> Connection string -> URI
+# ใช้แบบ Session pooler หรือ Direct connection ก็ได้ อย่าลืมแทน [YOUR-PASSWORD] ด้วยรหัสจริง
+
+on:
+  schedule:
+    # 19:00 UTC = ตี 2 ตามเวลาไทย
+    - cron: "0 19 * * *"
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: ติดตั้ง pg_dump ให้ตรงเวอร์ชันกับ Postgres ของ Supabase
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
+
+      - name: ดัมป์ฐานข้อมูล
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "ยังไม่ได้ตั้ง secret SUPABASE_DB_URL"
+            exit 1
+          fi
+          pg_dump "$SUPABASE_DB_URL" \
+            --schema=public \
+            --no-owner \
+            --no-privileges \
+            --clean \
+            --if-exists \
+            | gzip > "pungplin-$(date -u +%Y-%m-%d).sql.gz"
+
+      - name: เก็บไฟล์สำรอง
+        uses: actions/upload-artifact@v4
+        with:
+          name: pungplin-backup-${{ github.run_id }}
+          path: "*.sql.gz"
+          retention-days: 90
+          if-no-files-found: error

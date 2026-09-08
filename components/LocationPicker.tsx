@@ -1,0 +1,227 @@
+"use client";
+
+import { useState } from "react";
+
+import { MapPicker, type Coords } from "@/components/MapPicker";
+
+type GeocodePlace = {
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+};
+
+export type LocationValue = {
+  coords: Coords | null;
+  address: string;
+  googleUrl: string;
+};
+
+export function LocationPicker({
+  value,
+  onChange,
+  onSuggestName,
+  errors,
+}: {
+  value: LocationValue;
+  onChange: (next: LocationValue) => void;
+  onSuggestName?: (name: string) => void;
+  errors?: Record<string, string>;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<GeocodePlace[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [resolving, setResolving] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [linkNote, setLinkNote] = useState<string | null>(null);
+
+  async function runSearch() {
+    const term = query.trim();
+    if (term.length < 3) {
+      setSearchError("พิมพ์อย่างน้อย 3 ตัวอักษร");
+      return;
+    }
+
+    setSearching(true);
+    setSearchError(null);
+    setResults(null);
+
+    try {
+      const response = await fetch(`/api/geocode?q=${encodeURIComponent(term)}`);
+      const data = await response.json();
+      if (!response.ok) {
+        setSearchError(data.error ?? "ค้นหาไม่สำเร็จ");
+        return;
+      }
+      setResults(data.places as GeocodePlace[]);
+      if ((data.places as GeocodePlace[]).length === 0) {
+        setSearchError("ไม่เจอที่นี่ ลองพิมพ์ชื่อถนนหรือย่านเพิ่ม หรือปักหมุดเองด้านล่าง");
+      }
+    } catch {
+      setSearchError("ค้นหาไม่สำเร็จ ลองใหม่อีกครั้ง");
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  function pickResult(place: GeocodePlace) {
+    onChange({
+      ...value,
+      coords: { lat: place.lat, lng: place.lng },
+      address: place.address,
+    });
+    onSuggestName?.(place.name);
+    setResults(null);
+    setQuery("");
+  }
+
+  async function resolveGoogleLink() {
+    const url = value.googleUrl.trim();
+    if (!url) {
+      setLinkError("วางลิงก์ก่อน");
+      return;
+    }
+
+    setResolving(true);
+    setLinkError(null);
+    setLinkNote(null);
+
+    try {
+      const response = await fetch("/api/resolve-google", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setLinkError(data.error ?? "แกะลิงก์ไม่สำเร็จ");
+        return;
+      }
+
+      const place = data.place as { lat: number; lng: number; name: string | null };
+      onChange({ ...value, coords: { lat: place.lat, lng: place.lng } });
+      if (place.name) onSuggestName?.(place.name);
+      setLinkNote(
+        place.name ? `เจอแล้ว: ${place.name}` : "เจอพิกัดแล้ว ดูหมุดบนแผนที่ด้านล่าง",
+      );
+    } catch {
+      setLinkError("แกะลิงก์ไม่สำเร็จ ลองใหม่อีกครั้ง");
+    } finally {
+      setResolving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* ส่งขึ้น server เป็นค่าตัวเลขล้วน ไม่ได้ส่งสถานะ UI อะไรไปด้วย */}
+      <input type="hidden" name="lat" value={value.coords?.lat ?? ""} />
+      <input type="hidden" name="lng" value={value.coords?.lng ?? ""} />
+
+      <div>
+        <label className="field-label" htmlFor="place-search">
+          ค้นหาชื่อร้านหรือที่อยู่
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="place-search"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                // กัน Enter ในช่องค้นหาไปกด submit ทั้งฟอร์ม
+                event.preventDefault();
+                void runSearch();
+              }
+            }}
+            placeholder="เช่น ร้านลุงหนวด บางแสน"
+            className="field-input"
+          />
+          <button
+            type="button"
+            onClick={() => void runSearch()}
+            disabled={searching}
+            className="btn btn-secondary shrink-0"
+          >
+            {searching ? "กำลังค้น" : "ค้นหา"}
+          </button>
+        </div>
+        {searchError ? <p className="field-error">{searchError}</p> : null}
+
+        {results && results.length > 0 ? (
+          <ul className="mt-2 divide-y divide-line overflow-hidden rounded-2xl border border-line">
+            {results.map((place) => (
+              <li key={`${place.lat},${place.lng}`}>
+                <button
+                  type="button"
+                  onClick={() => pickResult(place)}
+                  className="block w-full bg-raised px-3 py-2 text-left hover:bg-surface"
+                >
+                  <span className="block text-sm font-semibold">{place.name}</span>
+                  <span className="block text-xs text-muted">{place.address}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+
+      <div>
+        <label className="field-label" htmlFor="google_url">
+          หรือวางลิงก์ Google Maps
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="google_url"
+            name="google_url"
+            type="url"
+            inputMode="url"
+            value={value.googleUrl}
+            onChange={(event) => onChange({ ...value, googleUrl: event.target.value })}
+            placeholder="https://maps.app.goo.gl/..."
+            className="field-input"
+          />
+          <button
+            type="button"
+            onClick={() => void resolveGoogleLink()}
+            disabled={resolving}
+            className="btn btn-secondary shrink-0"
+          >
+            {resolving ? "กำลังแกะ" : "แกะพิกัด"}
+          </button>
+        </div>
+        {errors?.google_url ? <p className="field-error">{errors.google_url}</p> : null}
+        {linkError ? <p className="field-error">{linkError}</p> : null}
+        {linkNote ? <p className="mt-1 text-sm text-leaf">{linkNote}</p> : null}
+      </div>
+
+      <MapPicker
+        value={value.coords}
+        onChange={(coords) => onChange({ ...value, coords })}
+      />
+
+      <p className="text-xs text-muted">
+        {value.coords
+          ? `หมุดอยู่ที่ ${value.coords.lat.toFixed(5)}, ${value.coords.lng.toFixed(5)}`
+          : "ยังไม่ได้ปักหมุด ร้านนี้จะไม่ขึ้นบนหน้าแผนที่จนกว่าจะปัก"}
+      </p>
+
+      <div>
+        <label className="field-label" htmlFor="address">
+          ที่อยู่
+        </label>
+        <input
+          id="address"
+          name="address"
+          value={value.address}
+          onChange={(event) => onChange({ ...value, address: event.target.value })}
+          placeholder="ใส่เองหรือปล่อยให้ระบบเติมจากผลค้นหา"
+          className="field-input"
+        />
+        {errors?.address ? <p className="field-error">{errors.address}</p> : null}
+      </div>
+    </div>
+  );
+}
