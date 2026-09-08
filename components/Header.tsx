@@ -9,16 +9,18 @@ export function Header({ person }: { person: Person }) {
   return (
     <header className="glass sticky top-0 z-20 border-b border-line">
       <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-        <Link href="/feed" className="group flex items-center gap-2">
+        {/* ไม่มีตัวหนังสือกำกับ เพราะในตัวโลโก้มีคำว่าพุงปลิ้นเขียนอยู่แล้ว
+            alt จึงต้องเป็นชื่อแอพ ไม่ใช่ค่าว่าง ไม่งั้นลิงก์นี้จะไม่มีชื่อให้
+            โปรแกรมอ่านหน้าจอบอกผู้ใช้ว่ากดไปแล้วจะไปไหน */}
+        <Link href="/feed" className="group flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={LOGO_SMALL}
-            alt=""
+            alt="พุงปลิ้น"
             width={192}
             height={192}
-            className="h-9 w-9 object-contain transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-rotate-6"
+            className="h-10 w-10 object-contain transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-rotate-6"
           />
-          <span className="text-lg font-bold text-yolk-deep">พุงปลิ้น</span>
         </Link>
 
         <nav className="flex items-center gap-1">
