@@ -176,24 +176,37 @@ h3 {
 }
 
 @layer components {
-  /* ===== อีเฟกต์ตอนของโผล่เข้ามา ===== */
+  /* ===== อีเฟกต์ตอนของโผล่เข้ามา =====
+   *
+   * ทุกตัวต้องใช้ fill-mode เป็น backwards ห้ามใช้ both เด็ดขาด
+   *
+   * both จะทิ้งค่าของเฟรมสุดท้ายไว้บน element ตลอดไปหลังเล่นจบ ซึ่งรวมถึง
+   * transform ด้วย และ element ที่มี transform ไม่ใช่ none จะกลายเป็น
+   * stacking context ของตัวเอง ผลคือเมนูหรือปฏิทินที่กางอยู่ในการ์ดใบหนึ่ง
+   * จะติดอยู่แค่ในการ์ดใบนั้น ใส่ z-index เท่าไหร่ก็ลอยข้ามการ์ดใบถัดไปไม่ได้
+   * เพราะ z-index เทียบกันได้แค่ในระดับชั้นเดียวกันเท่านั้น
+   *
+   * backwards ให้ผลที่ต้องการครบ: ตอนรออยู่ใน delay ใช้เฟรมแรก (opacity 0)
+   * จึงยังหน่วงให้โผล่ไล่กันได้ พอเล่นจบก็คืนกลับไปใช้สไตล์ปกติของ element
+   * ไม่มี transform ค้าง และไม่มีการกระตุกตอนคืนค่า เพราะเฟรมสุดท้าย
+   * ของทุกอันคือสภาพปกติอยู่แล้ว */
 
   .rise {
-    animation: pp-rise var(--dur-slow) var(--ease-out) both;
+    animation: pp-rise var(--dur-slow) var(--ease-out) backwards;
   }
 
   .pop {
-    animation: pp-pop var(--dur-base) var(--ease-spring) both;
+    animation: pp-pop var(--dur-base) var(--ease-spring) backwards;
   }
 
   .fade {
-    animation: pp-fade var(--dur-base) ease both;
+    animation: pp-fade var(--dur-base) ease backwards;
   }
 
   /* ไล่ให้ลูกแต่ละตัวโผล่ทีหลังกันเล็กน้อย รายการยาวๆ จะไหลเข้ามาเป็นระลอก
      ใช้ nth-child แทน inline style เพื่อไม่ต้องยิง style attribute เป็นสิบตัว */
   .stagger > * {
-    animation: pp-rise var(--dur-slow) var(--ease-out) both;
+    animation: pp-rise var(--dur-slow) var(--ease-out) backwards;
   }
 
   .stagger > *:nth-child(1) {
@@ -299,7 +312,7 @@ h3 {
     margin-top: 0.3rem;
     font-size: 0.8125rem;
     color: var(--color-heart);
-    animation: pp-rise var(--dur-base) var(--ease-out) both;
+    animation: pp-rise var(--dur-base) var(--ease-out) backwards;
   }
 
   /* ===== ปุ่ม ===== */
@@ -419,7 +432,7 @@ h3 {
     box-shadow:
       0 2px 6px rgba(42, 38, 32, 0.06),
       0 24px 50px -24px rgba(42, 38, 32, 0.45);
-    animation: pp-pop var(--dur-fast) var(--ease-out) both;
+    animation: pp-pop var(--dur-fast) var(--ease-out) backwards;
   }
 
   .menu-item {
@@ -532,7 +545,7 @@ h3 {
 
 /* ป้ายบนแผนที่โผล่มาแบบเด้งเบาๆ ให้รู้ว่ามันผูกกับหมุดที่เพิ่งกด */
 .ol-overlay-container > * {
-  animation: pp-pop var(--dur-base) var(--ease-spring) both;
+  animation: pp-pop var(--dur-base) var(--ease-spring) backwards;
 }
 
 /* บางคนตั้งค่าเครื่องว่าไม่อยากเห็นภาพเคลื่อนไหว เพราะทำให้เวียนหัวหรือคลื่นไส้จริงๆ
@@ -549,6 +562,10 @@ h3 {
   *::after {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
+    /* ต้องล้าง delay ด้วย ไม่ใช่แค่ย่อ duration เพราะ fill-mode เป็น backwards
+       ของที่ตั้ง delay ไว้จะยังซ่อนอยู่ตลอดช่วง delay แล้วเด้งโผล่มาทีหลัง
+       ซึ่งคือการกระตุกที่คนตั้งค่านี้อยากเลี่ยงพอดี */
+    animation-delay: 0ms !important;
     transition-duration: 1ms !important;
   }
 
