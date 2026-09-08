@@ -41,16 +41,8 @@ export default async function FeedPage({ searchParams }: PageProps<"/feed">) {
 
       {/* FeedFilters อ่าน searchParams จึงต้องอยู่ใน Suspense
           ระหว่างรอก็วางแถบสีเทารูปร่างเท่าตัวจริงไว้ก่อน ไม่ให้หน้ากระตุกตอนของโผล่ */}
-      <Suspense
-        fallback={
-          <div className="flex flex-wrap gap-2">
-            <Skeleton className="h-9 w-36 rounded-xl" />
-            <Skeleton className="h-9 w-44 rounded-xl" />
-            <Skeleton className="h-9 w-40 rounded-xl" />
-          </div>
-        }
-      >
-        <FeedFilters categories={categories} />
+      <Suspense fallback={<Skeleton className="h-9 w-28 rounded-full" />}>
+        <FeedFilters categories={categories} resultCount={visits.length} />
       </Suspense>
 
       {visits.length === 0 ? (

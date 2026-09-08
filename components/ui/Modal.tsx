@@ -31,6 +31,7 @@ export function Modal({
   description,
   icon,
   children,
+  placement = "center",
 }: {
   open: boolean;
   onClose: () => void;
@@ -38,6 +39,14 @@ export function Modal({
   description?: ReactNode;
   icon?: ReactNode;
   children?: ReactNode;
+  /**
+   * center คือกล่องกลางจอ ใช้กับการถามยืนยันสั้นๆ
+   *
+   * sheet คือแผ่นที่ติดขอบล่างจอ ซึ่งเป็นที่ที่นิ้วโป้งเอื้อมถึงง่ายที่สุด
+   * บนมือถือ เหมาะกับกล่องที่มีของให้เลือกหลายอย่าง พอจอกว้างขึ้น
+   * มันจะย้ายไปอยู่กลางจอเองเพราะแผ่นแปะขอบล่างบนจอคอมดูเคว้ง
+   */
+  placement?: "center" | "sheet";
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -96,9 +105,13 @@ export function Modal({
 
   if (!open || typeof document === "undefined") return null;
 
+  const sheet = placement === "sheet";
+
   return createPortal(
     <div
-      className="fade fixed inset-0 z-[90] grid place-items-center overflow-y-auto bg-ink/25 px-5 py-10 backdrop-blur-sm"
+      className={`fade fixed inset-0 z-[90] flex justify-center overflow-y-auto bg-ink/25 backdrop-blur-sm ${
+        sheet ? "items-end sm:items-center sm:px-5 sm:py-10" : "items-center px-5 py-10"
+      }`}
       onClick={(event) => {
         // ปิดเฉพาะตอนกดพื้นหลังจริงๆ ไม่ใช่ตอนกดของข้างในแล้ว event ลอยขึ้นมา
         if (event.target === event.currentTarget) onClose();
@@ -112,21 +125,28 @@ export function Modal({
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         onKeyDown={handleKeyDown}
-        className="pop card w-full max-w-sm p-6 outline-none"
+        className={`pop card outline-none ${
+          sheet
+            ? "w-full max-w-md rounded-b-none p-5 pb-8 sm:rounded-3xl sm:pb-5"
+            : "w-full max-w-sm p-6"
+        }`}
       >
         {icon ? <div className="mb-3 flex justify-center">{icon}</div> : null}
 
-        <h2 id={titleId} className="text-center text-lg font-bold">
+        <h2 id={titleId} className={`text-lg font-bold ${sheet ? "" : "text-center"}`}>
           {title}
         </h2>
 
         {description ? (
-          <p id={descriptionId} className="mt-2 text-center text-sm text-muted">
+          <p
+            id={descriptionId}
+            className={`mt-2 text-sm text-muted ${sheet ? "" : "text-center"}`}
+          >
             {description}
           </p>
         ) : null}
 
-        {children ? <div className="mt-5">{children}</div> : null}
+        {children ? <div className={sheet ? "mt-4" : "mt-5"}>{children}</div> : null}
       </div>
     </div>,
     document.body,
