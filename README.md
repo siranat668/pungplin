@@ -90,6 +90,51 @@ update visits set deleted_at = null where id = '...';
 ฝั่ง client ของหน้านั้นจะถูกบล็อกเงียบๆ ทั้งหมด ตอนนี้ทุกหน้าอ่านคุกกี้ผู้ใช้อยู่แล้วจึงเป็น dynamic หมด
 ถ้าเพิ่มหน้าที่ไม่แตะข้อมูลผู้ใช้ ต้องใส่ `export const dynamic = "force-dynamic"` ให้หน้านั้นด้วย
 
+**ห้ามใช้ `next/image`** มันเป็น client component ที่ Next.js ปล่อย `<script async>` ของตัวเอง
+ออกมาโดยไม่ติด nonce แล้ว CSP ที่ตั้ง `strict-dynamic` ไว้ก็บล็อกทุกครั้งที่เปิดหน้า
+โลโก้จึงย่อไว้ล่วงหน้าสองขนาดแล้วแสดงด้วย `<img>` ธรรมดา ดู `LOGO_SMALL` กับ `LOGO_LARGE`
+ใน [lib/constants.ts](lib/constants.ts)
+
+## UI ที่เขียนเองแทนของเบราว์เซอร์
+
+control ของเบราว์เซอร์หน้าตาและพฤติกรรมต่างกันทุกเครื่อง ปฏิทินของ Chrome บน Windows
+ไม่เหมือน Safari บน Mac ส่วน `select` บน iOS เด้งเป็นวงล้อขึ้นมาจากด้านล่างจอ
+และแต่งด้วย CSS ไม่ได้เลยเพราะระบบปฏิบัติการเป็นคนวาด ของพวกนี้จึงเขียนเองทั้งหมด
+อยู่ใน `components/ui/` แต่ละไฟล์เขียนเหตุผลกำกับไว้ว่ามาแทนอะไรและทำไม
+
+| ของเดิม | ใช้แทนด้วย |
+| --- | --- |
+| `<select>` | [Select.tsx](components/ui/Select.tsx) |
+| `<input type="date">` | [DatePicker.tsx](components/ui/DatePicker.tsx) ขึ้นปฏิทินไทยพร้อม พ.ศ. เหมือนกันทุกเครื่อง |
+| `<datalist>` | [Combobox.tsx](components/ui/Combobox.tsx) |
+| `window.confirm` | [ConfirmDialog.tsx](components/ui/ConfirmDialog.tsx) บน [Modal.tsx](components/ui/Modal.tsx) |
+| `<details>` กับ `<summary>` | [Disclosure.tsx](components/ui/Disclosure.tsx) |
+| attribute `title` | [Tooltip.tsx](components/ui/Tooltip.tsx) |
+| มือจับลากขยาย `<textarea>` | [AutoTextarea.tsx](components/ui/AutoTextarea.tsx) ยืดตามเนื้อหาเอง |
+
+ทุกตัวยังส่งค่าไปกับฟอร์มด้วย `<input type="hidden">` หรือ input จริงที่ซ่อนไว้
+ฝั่ง server action จึงอ่านค่าได้เหมือนเดิมไม่ต้องแก้อะไร และรองรับคีย์บอร์ดครบ
+ทั้งลูกศร Enter Escape Home End
+
+**เพิ่ม dropdown ในกล่องที่ยืดหุบได้ต้องระวัง** [Disclosure.tsx](components/ui/Disclosure.tsx)
+ยืดหุบด้วย `grid-template-rows` ซึ่งต้องมี `overflow: hidden` ตอนกำลังขยับ
+มันจะเลิกตัดขอบให้เองเมื่อยืดสุดแล้ว ไม่งั้นแถวล่างของปฏิทินข้างในจะถูกเฉือนหาย
+
+## ระบบการเคลื่อนไหว
+
+keyframes กับค่า easing รวมไว้ใน [app/globals.css](app/globals.css) ที่เดียว
+ทุก transition อ้าง `--ease-out`, `--ease-spring` กับ `--dur-*` จากตรงนั้น
+ของจะได้ขยับด้วยจังหวะเดียวกันหมดทั้งแอพ
+
+ทุกจุดที่ต้องรอมีตัวบอกสถานะที่ทำจากโลโก้ ([BrandLoader.tsx](components/ui/BrandLoader.tsx))
+งานที่เขียนข้อมูลจะขึ้นกล่องคลุมทั้งจอ ([LoadingOverlay.tsx](components/ui/LoadingOverlay.tsx))
+ซึ่งกันการกดซ้ำไปด้วย ส่วนงานที่แค่อ่านข้อมูลจะวางตัวโหลดหรือโครงร่างไว้ตรงที่ผลจะโผล่
+หน้าไม่กระตุกตอนของจริงมาแทน และการเปลี่ยนหน้ามี [app/(app)/loading.tsx](app/(app)/loading.tsx) รับไว้
+
+`@media (prefers-reduced-motion: reduce)` ตัดการเคลื่อนไหวทั้งหมดให้เหลือ 1ms
+เว้นวงแหวนที่หมุนรอโหลดซึ่งเป็นข้อมูลไม่ใช่ของประดับ ที่สำคัญคือห้ามเขียน `animation: none`
+เพราะของที่ใช้ `both` จะค้างที่เฟรมแรกซึ่ง `opacity` เป็น 0 แล้วหน้าจะว่างเปล่า
+
 ## คำสั่ง
 
 ```bash

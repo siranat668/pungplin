@@ -6,6 +6,7 @@ import { MapThumb } from "@/components/MapThumb";
 import { RestaurantEditForm } from "@/components/RestaurantEditForm";
 import { ScoreBadge } from "@/components/ScoreBadge";
 import { VisitCard } from "@/components/VisitCard";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { PERSON_LABEL, PRICE_LEVELS, RATING_CATEGORIES, type Person } from "@/lib/constants";
 import { deleteRestaurantAction } from "@/lib/actions/visits";
 import { formatDateLong } from "@/lib/format";
@@ -49,9 +50,22 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurant/
   }));
 
   return (
-    <div className="space-y-5">
+    <div className="stagger space-y-5">
       <div>
-        <Link href="/feed" className="text-sm text-muted hover:text-ink">
+        <Link
+          href="/feed"
+          className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-ink"
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden>
+            <path
+              d="m14 6-6 6 6 6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
           กลับไปหน้าบันทึก
         </Link>
 
@@ -101,8 +115,9 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurant/
                 <dt className="w-28 shrink-0 text-sm text-muted">{row.label}</dt>
                 <dd className="flex flex-1 items-center gap-2">
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-raised">
+                    {/* แถบไล่จากเหลืองไปชมพูตามพาเลตต์โลโก้ ยืดออกตอนโหลดหน้าเสร็จ */}
                     <div
-                      className="h-full rounded-full bg-yolk"
+                      className="h-full rounded-full bg-gradient-to-r from-yolk to-bubble transition-[width] duration-700 ease-out"
                       style={{ width: `${((row.score ?? 0) / 5) * 100}%` }}
                     />
                   </div>
@@ -130,16 +145,17 @@ export default async function RestaurantPage({ params }: PageProps<"/restaurant/
         {visits.length === 0 ? (
           <p className="card p-6 text-center text-sm text-muted">ยังไม่มีบันทึกของร้านนี้</p>
         ) : (
-          visits.map((visit) => <VisitCard key={visit.id} visit={visit} />)
+          <div className="stagger space-y-3">
+            {visits.map((visit) => (
+              <VisitCard key={visit.id} visit={visit} />
+            ))}
+          </div>
         )}
       </section>
 
-      <details className="card p-4">
-        <summary className="cursor-pointer font-bold">แก้ไขข้อมูลร้าน</summary>
-        <div className="mt-4">
-          <RestaurantEditForm restaurant={restaurant} />
-        </div>
-      </details>
+      <Disclosure title="แก้ไขข้อมูลร้าน" className="card p-4">
+        <RestaurantEditForm restaurant={restaurant} />
+      </Disclosure>
 
       <DangerButton
         action={deleteRestaurantAction}

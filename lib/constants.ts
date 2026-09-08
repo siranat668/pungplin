@@ -68,3 +68,22 @@ export const DEFAULT_MAP_CENTER = { lat: 13.7563, lng: 100.5018 };
  * ถ้าย้ายไปใช้ tile เจ้าอื่น ต้องไปแก้ที่นั่นด้วยไม่งั้นแผนที่จะขึ้นเป็นสีเทาเปล่าๆ
  */
 export const OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+/*
+ * โลโก้มีสองขนาด แสดงด้วย img ธรรมดา ไม่ได้ใช้ next/image
+ *
+ * เหตุผลที่เลี่ยง next/image: มันเป็น client component ซึ่ง Next.js ปล่อย
+ * script ก้อนของมันออกมาเป็น <script async> ที่ไม่มี nonce ติดมาด้วย
+ * CSP ของเรากำหนด strict-dynamic ไว้ เบราว์เซอร์จึงบล็อกก้อนนั้นทุกครั้ง
+ * ที่เปิดหน้า แล้วขึ้น error ค้างใน console ตลอด
+ *
+ * ที่ next/image มีให้คือการย่อรูปให้อัตโนมัติ ซึ่งเราทำเองไปแล้วตอน build
+ * ไฟล์ทั้งสองด้านล่างนี้ (แปลงจาก public/logo.png ด้วย sharp) ก็เลยไม่เสียอะไร
+ * แถมได้ JavaScript ฝั่ง client น้อยลงด้วย
+ *
+ * ถ้าวันหลังจะเปลี่ยนรูปโลโก้ ให้แก้ public/logo.png แล้วสร้างสองไฟล์นี้ใหม่
+ */
+/** 512px ใช้กับโลโก้ตัวใหญ่หน้าเลือกคน ที่แสดงจริงกว้าง 176px */
+export const LOGO_LARGE = "/logo.webp";
+/** 192px ใช้กับโลโก้บนแถบหัวเว็บและในตัวรอโหลด ที่แสดงจริงไม่เกิน 64px */
+export const LOGO_SMALL = "/logo-small.webp";

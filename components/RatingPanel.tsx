@@ -5,6 +5,9 @@ import { useActionState, useState } from "react";
 import { HeartDisplay } from "@/components/HeartDisplay";
 import { HeartRating } from "@/components/HeartRating";
 import { ScoreBadge } from "@/components/ScoreBadge";
+import { AutoTextarea } from "@/components/ui/AutoTextarea";
+import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { PERSON_LABEL, RATING_CATEGORIES, type Person } from "@/lib/constants";
 import { upsertRatingAction } from "@/lib/actions/visits";
 import { initialFormState } from "@/lib/form-state";
@@ -43,7 +46,7 @@ export function RatingPanel({
 
   if (editing) {
     return (
-      <form action={formAction} className="card p-4">
+      <form action={formAction} className="card pop p-4">
         <input type="hidden" name="visit_id" value={visitId} />
 
         <h3 className={`text-lg font-bold ${ACCENT[person]}`}>
@@ -66,13 +69,11 @@ export function RatingPanel({
           <label className="field-label" htmlFor={`comment-${person}`}>
             ความเห็นเพิ่มเติม
           </label>
-          <textarea
+          <AutoTextarea
             id={`comment-${person}`}
             name="comment"
-            rows={3}
             defaultValue={rating?.comment ?? ""}
             placeholder="อร่อยตรงไหน ติดตรงไหน จะกลับไปอีกไหม"
-            className="field-input resize-y"
           />
           {errors.comment ? <p className="field-error">{errors.comment}</p> : null}
         </div>
@@ -82,9 +83,9 @@ export function RatingPanel({
         ) : null}
 
         <div className="mt-4 flex gap-2">
-          <button type="submit" disabled={pending} className="btn btn-primary flex-1 text-sm">
-            {pending ? "กำลังบันทึก" : "บันทึกคะแนน"}
-          </button>
+          <SubmitButton pending={pending} pendingLabel="กำลังบันทึก" className="flex-1 text-sm">
+            บันทึกคะแนน
+          </SubmitButton>
           {rating ? (
             <button
               type="button"
@@ -95,6 +96,8 @@ export function RatingPanel({
             </button>
           ) : null}
         </div>
+
+        <LoadingOverlay show={pending} message="กำลังบันทึกคะแนน" />
       </form>
     );
   }
@@ -142,14 +145,24 @@ export function RatingPanel({
         <button
           type="button"
           onClick={() => setEditingSince(rating.updated_at)}
-          className="btn btn-ghost mt-3 px-0 text-sm"
+          className="btn btn-ghost mt-3 gap-1.5 px-0 text-sm"
         >
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden>
+            <path
+              d="M4 20h4L20 8l-4-4L4 16v4Zm11-15 4 4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
           แก้คะแนนของฉัน
         </button>
       ) : null}
 
       {state.status === "success" ? (
-        <p className="mt-2 text-sm text-leaf">{state.message}</p>
+        <p className="fade mt-2 text-sm text-leaf">{state.message}</p>
       ) : null}
     </div>
   );

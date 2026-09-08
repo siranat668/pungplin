@@ -8,7 +8,9 @@ function Heart({ filled }: { filled: boolean }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-7 w-7 transition-transform"
+      /* ดวงที่ติดจะโตขึ้นเล็กน้อยด้วยจังหวะเด้ง ทำให้การกดให้คะแนนรู้สึกมีน้ำหนัก */
+      className="h-7 w-7 transition-transform duration-200"
+      style={{ transform: filled ? "scale(1.08)" : "scale(1)", transitionTimingFunction: "var(--ease-spring)" }}
       fill={filled ? "var(--color-heart)" : "transparent"}
       stroke={filled ? "var(--color-heart)" : "var(--color-line)"}
       strokeWidth={2}
@@ -43,7 +45,7 @@ export function HeartRating({
         {SCORES.map((score) => (
           <label
             key={score}
-            className="cursor-pointer rounded-lg p-0.5 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-yolk"
+            className="cursor-pointer rounded-lg p-0.5 transition-transform duration-150 hover:scale-110 active:scale-95 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-yolk"
             onMouseEnter={() => setPreview(score)}
           >
             {/* เป็น radio จริงๆ ไม่ใช่ปุ่มปลอม คีย์บอร์ดกับ screen reader จึงใช้ได้ */}

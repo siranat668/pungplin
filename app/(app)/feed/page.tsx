@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { FeedFilters } from "@/components/FeedFilters";
 import { SetupNotice } from "@/components/SetupNotice";
 import { VisitCard } from "@/components/VisitCard";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { isDbConfigured } from "@/lib/db";
 import { listUsedCategories, listVisits } from "@/lib/queries";
 
@@ -38,19 +39,29 @@ export default async function FeedPage({ searchParams }: PageProps<"/feed">) {
         <span className="text-sm text-muted">{visits.length} ครั้ง</span>
       </div>
 
-      <Suspense fallback={null}>
+      {/* FeedFilters อ่าน searchParams จึงต้องอยู่ใน Suspense
+          ระหว่างรอก็วางแถบสีเทารูปร่างเท่าตัวจริงไว้ก่อน ไม่ให้หน้ากระตุกตอนของโผล่ */}
+      <Suspense
+        fallback={
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-9 w-36 rounded-xl" />
+            <Skeleton className="h-9 w-44 rounded-xl" />
+            <Skeleton className="h-9 w-40 rounded-xl" />
+          </div>
+        }
+      >
         <FeedFilters categories={categories} />
       </Suspense>
 
       {visits.length === 0 ? (
-        <div className="card p-8 text-center">
+        <div className="card pop p-8 text-center">
           <p className="text-muted">ยังไม่มีบันทึกที่ตรงกับที่กรองไว้</p>
           <Link href="/new" className="btn btn-primary mt-4">
             เพิ่มบันทึกแรก
           </Link>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="stagger space-y-3">
           {visits.map((visit) => (
             <VisitCard key={visit.id} visit={visit} />
           ))}

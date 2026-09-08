@@ -3,13 +3,23 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
+import { Select, type SelectOption } from "@/components/ui/Select";
+import { Spinner } from "@/components/ui/Spinner";
 import { PEOPLE, PERSON_LABEL } from "@/lib/constants";
 
-const MIN_SCORES = [
+const MIN_SCORES: SelectOption[] = [
   { value: "", label: "คะแนนเท่าไหร่ก็ได้" },
   { value: "3", label: "3 ดวงขึ้นไป" },
   { value: "4", label: "4 ดวงขึ้นไป" },
   { value: "4.5", label: "4.5 ดวงขึ้นไป" },
+];
+
+const REVIEWERS: SelectOption[] = [
+  { value: "", label: "ใครให้คะแนนก็ได้" },
+  ...PEOPLE.map((person) => ({
+    value: person,
+    label: `${PERSON_LABEL[person]}ให้คะแนนแล้ว`,
+  })),
 ];
 
 export function FeedFilters({ categories }: { categories: string[] }) {
@@ -27,54 +37,38 @@ export function FeedFilters({ categories }: { categories: string[] }) {
     });
   }
 
+  const categoryOptions: SelectOption[] = [
+    { value: "", label: "ทุกประเภท" },
+    ...categories.map((category) => ({ value: category, label: category })),
+  ];
+
   const hasFilters = searchParams.size > 0;
 
   return (
-    <div
-      className={`flex flex-wrap items-center gap-2 transition-opacity ${
-        pending ? "opacity-60" : ""
-      }`}
-    >
-      <select
-        aria-label="กรองตามประเภทอาหาร"
+    <div className="flex flex-wrap items-center gap-2">
+      <Select
+        ariaLabel="กรองตามประเภทอาหาร"
         value={searchParams.get("category") ?? ""}
-        onChange={(event) => update("category", event.target.value)}
-        className="field-input w-auto py-1.5 text-sm"
-      >
-        <option value="">ทุกประเภท</option>
-        {categories.map((category) => (
-          <option key={category} value={category}>
-            {category}
-          </option>
-        ))}
-      </select>
+        onChange={(value) => update("category", value)}
+        options={categoryOptions}
+        compact
+      />
 
-      <select
-        aria-label="กรองตามคะแนน"
+      <Select
+        ariaLabel="กรองตามคะแนน"
         value={searchParams.get("min") ?? ""}
-        onChange={(event) => update("min", event.target.value)}
-        className="field-input w-auto py-1.5 text-sm"
-      >
-        {MIN_SCORES.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        onChange={(value) => update("min", value)}
+        options={MIN_SCORES}
+        compact
+      />
 
-      <select
-        aria-label="กรองตามคนให้คะแนน"
+      <Select
+        ariaLabel="กรองตามคนให้คะแนน"
         value={searchParams.get("by") ?? ""}
-        onChange={(event) => update("by", event.target.value)}
-        className="field-input w-auto py-1.5 text-sm"
-      >
-        <option value="">ใครให้คะแนนก็ได้</option>
-        {PEOPLE.map((person) => (
-          <option key={person} value={person}>
-            {PERSON_LABEL[person]}ให้คะแนนแล้ว
-          </option>
-        ))}
-      </select>
+        onChange={(value) => update("by", value)}
+        options={REVIEWERS}
+        compact
+      />
 
       {hasFilters ? (
         <button
@@ -84,6 +78,15 @@ export function FeedFilters({ categories }: { categories: string[] }) {
         >
           ล้างตัวกรอง
         </button>
+      ) : null}
+
+      {/* ตัวหมุนเล็กๆ ตอนกำลังไปเอารายการชุดใหม่ ไม่ได้หรี่ทั้งแถบเหมือนเดิม
+          เพราะการหรี่ทำให้ตัวหนังสืออ่านยากขึ้นทั้งที่ยังกดใช้งานได้ปกติ */}
+      {pending ? (
+        <span className="fade flex items-center gap-1.5 text-xs text-muted" role="status">
+          <Spinner size={14} />
+          กำลังกรอง
+        </span>
       ) : null}
     </div>
   );

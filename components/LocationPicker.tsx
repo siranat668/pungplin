@@ -3,6 +3,9 @@
 import { useState } from "react";
 
 import { MapPicker, type Coords } from "@/components/MapPicker";
+import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { Spinner } from "@/components/ui/Spinner";
 
 type GeocodePlace = {
   name: string;
@@ -161,9 +164,14 @@ export function LocationPicker({
             disabled={resolving}
             className="btn btn-secondary shrink-0"
           >
+            {resolving ? <Spinner size={16} /> : null}
             {resolving ? "กำลังแกะ" : "แกะข้อมูล"}
           </button>
         </div>
+
+        {/* การแกะลิงก์ต้องวิ่งไปถาม Google แล้วต่อด้วย Nominatim อีกทอด
+            นานพอที่จะต้องมีกล่องบอกว่าระบบยังทำงานอยู่ ไม่ใช่ค้าง */}
+        <LoadingOverlay show={resolving} message="กำลังแกะลิงก์" />
         <p className="mt-1 text-xs text-muted">
           กดแชร์ในแอพ Google Maps แล้วคัดลอกลิงก์มาวาง ระบบจะแกะพิกัด ชื่อร้าน และที่อยู่ให้เอง
         </p>
@@ -179,7 +187,9 @@ export function LocationPicker({
         <div className="flex gap-2">
           <input
             id="place-search"
-            type="search"
+            /* ไม่ใช้ type="search" เพราะ WebKit เติมปุ่มกากบาทล้างช่องเข้ามาให้เอง
+               ซึ่งเบราว์เซอร์อื่นไม่มี ทำให้ช่องเดียวกันหน้าตาไม่เท่ากันแต่ละเครื่อง */
+            type="text"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
@@ -198,19 +208,33 @@ export function LocationPicker({
             disabled={searching}
             className="btn btn-secondary shrink-0"
           >
+            {searching ? <Spinner size={16} /> : null}
             {searching ? "กำลังค้น" : "ค้นหา"}
           </button>
         </div>
         {searchError ? <p className="field-error">{searchError}</p> : null}
 
-        {results && results.length > 0 ? (
-          <ul className="mt-2 divide-y divide-line overflow-hidden rounded-2xl border border-line">
+        {/* ผลค้นหาโผล่ตรงนี้ ระหว่างรอจึงวางโครงร่างไว้ที่เดิมแทนกล่องกลางจอ
+            พอผลจริงมาแทนที่ ของก็อยู่ตำแหน่งเดิม หน้าไม่กระตุกขึ้นลง */}
+        {searching ? (
+          <div className="fade mt-2 space-y-px overflow-hidden rounded-2xl border border-line">
+            {[0, 1, 2].map((row) => (
+              <div key={row} className="space-y-1.5 bg-raised px-3 py-2.5">
+                <Skeleton className="h-3.5 w-2/5" />
+                <Skeleton className="h-2.5 w-4/5" />
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {!searching && results && results.length > 0 ? (
+          <ul className="stagger mt-2 divide-y divide-line overflow-hidden rounded-2xl border border-line">
             {results.map((place) => (
               <li key={`${place.lat},${place.lng}`}>
                 <button
                   type="button"
                   onClick={() => pickResult(place)}
-                  className="block w-full bg-raised px-3 py-2 text-left hover:bg-surface"
+                  className="block w-full bg-raised px-3 py-2 text-left transition-colors duration-150 hover:bg-surface"
                 >
                   <span className="block text-sm font-semibold">{place.name}</span>
                   <span className="block text-xs text-muted">{place.address}</span>

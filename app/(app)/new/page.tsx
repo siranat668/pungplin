@@ -18,7 +18,7 @@ export default async function NewVisitPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold">เพิ่มบันทึกใหม่</h1>
+      <h1 className="rise text-2xl font-bold">เพิ่มบันทึกใหม่</h1>
 
       <VisitForm
         person={person}

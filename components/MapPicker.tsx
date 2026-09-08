@@ -7,6 +7,8 @@ import type Point from "ol/geom/Point";
 
 import "ol/ol.css";
 
+import { BrandLoader } from "@/components/ui/BrandLoader";
+import { Spinner } from "@/components/ui/Spinner";
 import { DEFAULT_MAP_CENTER, OSM_TILE_URL } from "@/lib/constants";
 
 export type Coords = { lat: number; lng: number };
@@ -191,11 +193,24 @@ export function MapPicker({
 
   return (
     <div className="space-y-2">
-      <div
-        ref={containerRef}
-        style={{ height }}
-        className="w-full overflow-hidden rounded-2xl border border-line bg-raised"
-      />
+      <div className="relative" style={{ height }}>
+        <div
+          ref={containerRef}
+          className="h-full w-full overflow-hidden rounded-2xl border border-line bg-raised transition-opacity duration-500"
+          style={{ opacity: ready ? 1 : 0 }}
+        />
+
+        {/* โมดูลของ OpenLayers กับ tile ชุดแรกใช้เวลาโหลดอยู่ไม่กี่ร้อยมิลลิวินาที
+            ถ้าปล่อยว่างไว้มันจะเป็นสี่เหลี่ยมเทาเปล่าๆ ที่ดูเหมือนแผนที่เสีย */}
+        {ready ? null : (
+          <div className="absolute inset-0 grid place-items-center rounded-2xl border border-line bg-raised">
+            <div className="flex flex-col items-center gap-2">
+              <BrandLoader size={64} />
+              <span className="text-xs text-muted">กำลังเปิดแผนที่</span>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
         <span>แตะบนแผนที่เพื่อวางหมุด หรือลากหมุดเพื่อขยับ</span>
@@ -205,7 +220,33 @@ export function MapPicker({
           disabled={locating}
           className="btn btn-secondary px-3 py-1 text-xs"
         >
-          {locating ? "กำลังหาตำแหน่ง" : "ใช้ตำแหน่งปัจจุบัน"}
+          {locating ? (
+            <>
+              <Spinner size={13} />
+              กำลังหาตำแหน่ง
+            </>
+          ) : (
+            <>
+              <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden>
+                <path
+                  d="M12 2v3m0 14v3M2 12h3m14 0h3"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+              </svg>
+              ใช้ตำแหน่งปัจจุบัน
+            </>
+          )}
         </button>
       </div>
     </div>

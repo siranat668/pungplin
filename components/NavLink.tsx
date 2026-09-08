@@ -10,8 +10,11 @@ export function NavLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className={`rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
-        active ? "bg-raised text-yolk-deep" : "text-muted hover:text-ink"
+      aria-current={active ? "page" : undefined}
+      className={`relative rounded-full px-3 py-1.5 text-sm font-semibold transition-all duration-200 ease-out ${
+        active
+          ? "bg-raised text-yolk-deep shadow-[inset_0_0_0_1px_var(--color-line)]"
+          : "text-muted hover:bg-raised/60 hover:text-ink"
       }`}
     >
       {label}

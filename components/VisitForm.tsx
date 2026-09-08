@@ -4,6 +4,12 @@ import { useActionState, useState } from "react";
 
 import { HeartRating } from "@/components/HeartRating";
 import { LocationPicker, type LocationValue } from "@/components/LocationPicker";
+import { AutoTextarea } from "@/components/ui/AutoTextarea";
+import { Combobox } from "@/components/ui/Combobox";
+import { DatePicker } from "@/components/ui/DatePicker";
+import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
+import { Select, type SelectOption } from "@/components/ui/Select";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import {
   CUISINE_SUGGESTIONS,
   PERSON_LABEL,
@@ -38,15 +44,27 @@ export function VisitForm({
   );
   const [restaurantId, setRestaurantId] = useState(restaurants[0]?.id ?? "");
   const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
+  const [priceLevel, setPriceLevel] = useState<number | null>(null);
+  const [visitedOn, setVisitedOn] = useState(today);
   const [location, setLocation] = useState<LocationValue>(EMPTY_LOCATION);
 
   const errors = state.errors ?? {};
+
+  const restaurantOptions: SelectOption[] = restaurants.map((restaurant) => ({
+    value: restaurant.id,
+    label: restaurant.category
+      ? `${restaurant.name} · ${restaurant.category}`
+      : restaurant.name,
+  }));
+
+  const priceHint = PRICE_LEVELS.find((level) => level.value === priceLevel)?.hint;
 
   return (
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="mode" value={mode} />
 
-      <section className="card p-4">
+      <section className="card rise p-4">
         <h2 className="mb-3 text-lg font-bold">ร้านไหน</h2>
 
         <div className="mb-4 grid grid-cols-2 gap-2">
@@ -67,31 +85,28 @@ export function VisitForm({
           </button>
         </div>
 
+        {/* สองฝั่งนี้สลับกันด้วยการ unmount ฝั่งเก่าแล้ว mount ฝั่งใหม่
+            คลาส pop จึงเล่นเองทุกครั้งที่สลับ ไม่ต้องจัดการอะไรเพิ่ม */}
         {mode === "existing" ? (
-          <div>
+          <div className="pop">
             <label className="field-label" htmlFor="restaurant_id">
               เลือกร้าน
             </label>
-            <select
+            <Select
               id="restaurant_id"
               name="restaurant_id"
               value={restaurantId}
-              onChange={(event) => setRestaurantId(event.target.value)}
-              className="field-input"
-            >
-              {restaurants.map((restaurant) => (
-                <option key={restaurant.id} value={restaurant.id}>
-                  {restaurant.name}
-                  {restaurant.category ? ` · ${restaurant.category}` : ""}
-                </option>
-              ))}
-            </select>
+              onChange={setRestaurantId}
+              options={restaurantOptions}
+              placeholder="เลือกร้านที่เคยไป"
+              ariaLabel="เลือกร้าน"
+            />
             {errors.restaurant_id ? (
               <p className="field-error">{errors.restaurant_id}</p>
             ) : null}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="pop space-y-4">
             <div>
               <label className="field-label" htmlFor="name">
                 ชื่อร้าน
@@ -112,18 +127,14 @@ export function VisitForm({
                 <label className="field-label" htmlFor="category">
                   ประเภทอาหาร
                 </label>
-                <input
+                <Combobox
                   id="category"
                   name="category"
-                  list="cuisine-suggestions"
+                  value={category}
+                  onChange={setCategory}
+                  suggestions={CUISINE_SUGGESTIONS}
                   placeholder="เลือกหรือพิมพ์เอง"
-                  className="field-input"
                 />
-                <datalist id="cuisine-suggestions">
-                  {CUISINE_SUGGESTIONS.map((cuisine) => (
-                    <option key={cuisine} value={cuisine} />
-                  ))}
-                </datalist>
                 {errors.category ? <p className="field-error">{errors.category}</p> : null}
               </div>
 
@@ -133,19 +144,25 @@ export function VisitForm({
                   {PRICE_LEVELS.map((level) => (
                     <label
                       key={level.value}
-                      title={level.hint}
-                      className="flex-1 cursor-pointer rounded-xl border border-line bg-raised py-2 text-center text-sm has-[:checked]:border-yolk has-[:checked]:bg-yolk/20 has-[:checked]:font-bold has-[:checked]:text-yolk-deep has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-yolk"
+                      className="flex-1 cursor-pointer rounded-xl border border-line bg-raised py-2 text-center text-sm transition-all duration-150 hover:border-yolk/50 has-[:checked]:border-yolk has-[:checked]:bg-yolk/20 has-[:checked]:font-bold has-[:checked]:text-yolk-deep has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-yolk"
                     >
                       <input
                         type="radio"
                         name="price_level"
                         value={level.value}
+                        checked={priceLevel === level.value}
+                        onChange={() => setPriceLevel(level.value)}
                         className="sr-only"
                       />
                       {level.label}
                     </label>
                   ))}
                 </div>
+                {/* คำอธิบายช่วงราคาเคยอยู่ใน title ซึ่งเป็น tooltip ของเบราว์เซอร์
+                    ที่ต้องเอาเมาส์จ่อค้างไว้สองวินาที และบนมือถือไม่มีทางเห็นเลย */}
+                <p className="mt-1.5 text-xs text-muted">
+                  {priceHint ?? "แตะเพื่อเลือกราคาต่อคน"}
+                </p>
               </div>
             </div>
 
@@ -159,20 +176,20 @@ export function VisitForm({
         )}
       </section>
 
-      <section className="card p-4">
+      <section className="card rise p-4">
         <h2 className="mb-3 text-lg font-bold">ไปกินวันไหน</h2>
 
         <div>
           <label className="field-label" htmlFor="visited_on">
             วันที่
           </label>
-          <input
+          <DatePicker
             id="visited_on"
             name="visited_on"
-            type="date"
-            defaultValue={today}
+            value={visitedOn}
+            onChange={setVisitedOn}
+            today={today}
             max={today}
-            className="field-input"
           />
           {errors.visited_on ? <p className="field-error">{errors.visited_on}</p> : null}
         </div>
@@ -181,30 +198,28 @@ export function VisitForm({
           <label className="field-label" htmlFor="note">
             บันทึกของวันนั้น
           </label>
-          <textarea
+          <AutoTextarea
             id="note"
             name="note"
-            rows={3}
             placeholder="สั่งอะไรไปบ้าง ไปกับใคร มีอะไรน่าจำ"
-            className="field-input resize-y"
           />
           {errors.note ? <p className="field-error">{errors.note}</p> : null}
         </div>
       </section>
 
-      <section className="card p-4">
+      <section className="card rise p-4">
         <h2 className="text-lg font-bold">คะแนนของ{PERSON_LABEL[person]}</h2>
         <p className="mb-2 text-sm text-muted">
           อีกคนมาให้คะแนนของตัวเองทีหลังได้ที่หน้าบันทึกนี้
         </p>
 
         <div className="divide-y divide-line">
-          {RATING_CATEGORIES.map((category) => (
+          {RATING_CATEGORIES.map((item) => (
             <HeartRating
-              key={category.key}
-              name={category.key}
-              label={category.label}
-              error={errors[category.key]}
+              key={item.key}
+              name={item.key}
+              label={item.label}
+              error={errors[item.key]}
             />
           ))}
         </div>
@@ -213,26 +228,26 @@ export function VisitForm({
           <label className="field-label" htmlFor="comment">
             ความเห็นเพิ่มเติม
           </label>
-          <textarea
+          <AutoTextarea
             id="comment"
             name="comment"
-            rows={3}
             placeholder="อร่อยตรงไหน ติดตรงไหน จะกลับไปอีกไหม"
-            className="field-input resize-y"
           />
           {errors.comment ? <p className="field-error">{errors.comment}</p> : null}
         </div>
       </section>
 
       {state.status === "error" && state.message ? (
-        <p className="rounded-2xl border border-heart/40 bg-heart/10 px-4 py-3 text-sm text-heart">
+        <p className="rise rounded-2xl border border-heart/40 bg-heart/10 px-4 py-3 text-sm text-heart">
           {state.message}
         </p>
       ) : null}
 
-      <button type="submit" disabled={pending} className="btn btn-primary w-full py-3">
-        {pending ? "กำลังบันทึก" : "บันทึกเลย"}
-      </button>
+      <SubmitButton pending={pending} pendingLabel="กำลังบันทึก" className="w-full py-3">
+        บันทึกเลย
+      </SubmitButton>
+
+      <LoadingOverlay show={pending} message="กำลังบันทึก" />
     </form>
   );
 }

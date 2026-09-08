@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type OlMap from "ol/Map";
 
 import "ol/ol.css";
 
+import { BrandLoader } from "@/components/ui/BrandLoader";
 import { OSM_TILE_URL } from "@/lib/constants";
 
 /**
@@ -24,6 +25,7 @@ export function MapThumb({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<OlMap | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +82,8 @@ export function MapThumb({
         ],
         view: new View({ center, zoom: 16 }),
       });
+
+      setReady(true);
     })();
 
     return () => {
@@ -87,14 +91,23 @@ export function MapThumb({
       mapRef.current?.setTarget(undefined);
       mapRef.current?.dispose();
       mapRef.current = null;
+      setReady(false);
     };
   }, [lat, lng]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{ height }}
-      className="w-full overflow-hidden rounded-2xl border border-line bg-raised"
-    />
+    <div className="relative" style={{ height }}>
+      <div
+        ref={containerRef}
+        className="h-full w-full overflow-hidden rounded-2xl border border-line bg-raised transition-opacity duration-500"
+        style={{ opacity: ready ? 1 : 0 }}
+      />
+
+      {ready ? null : (
+        <div className="absolute inset-0 grid place-items-center rounded-2xl border border-line bg-raised">
+          <BrandLoader size={56} />
+        </div>
+      )}
+    </div>
   );
 }

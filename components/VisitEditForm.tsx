@@ -1,21 +1,27 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
+import { AutoTextarea } from "@/components/ui/AutoTextarea";
+import { DatePicker } from "@/components/ui/DatePicker";
+import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { updateVisitAction } from "@/lib/actions/visits";
 import { initialFormState } from "@/lib/form-state";
-import { todayInBangkok } from "@/lib/format";
 
 export function VisitEditForm({
   visitId,
   visitedOn,
   note,
+  today,
 }: {
   visitId: string;
   visitedOn: string;
   note: string | null;
+  today: string;
 }) {
   const [state, formAction, pending] = useActionState(updateVisitAction, initialFormState);
+  const [date, setDate] = useState(visitedOn);
   const errors = state.errors ?? {};
 
   return (
@@ -26,13 +32,13 @@ export function VisitEditForm({
         <label className="field-label" htmlFor="edit-visited-on">
           วันที่ไปกิน
         </label>
-        <input
+        <DatePicker
           id="edit-visited-on"
           name="visited_on"
-          type="date"
-          defaultValue={visitedOn}
-          max={todayInBangkok()}
-          className="field-input"
+          value={date}
+          onChange={setDate}
+          today={today}
+          max={today}
         />
         {errors.visited_on ? <p className="field-error">{errors.visited_on}</p> : null}
       </div>
@@ -41,13 +47,7 @@ export function VisitEditForm({
         <label className="field-label" htmlFor="edit-note">
           บันทึกของวันนั้น
         </label>
-        <textarea
-          id="edit-note"
-          name="note"
-          rows={3}
-          defaultValue={note ?? ""}
-          className="field-input resize-y"
-        />
+        <AutoTextarea id="edit-note" name="note" defaultValue={note ?? ""} />
         {errors.note ? <p className="field-error">{errors.note}</p> : null}
       </div>
 
@@ -55,12 +55,19 @@ export function VisitEditForm({
         <p className="field-error">{state.message}</p>
       ) : null}
       {state.status === "success" ? (
-        <p className="text-sm text-leaf">{state.message}</p>
+        <p className="fade text-sm text-leaf">{state.message}</p>
       ) : null}
 
-      <button type="submit" disabled={pending} className="btn btn-secondary text-sm">
-        {pending ? "กำลังบันทึก" : "บันทึกการแก้ไข"}
-      </button>
+      <SubmitButton
+        variant="secondary"
+        pending={pending}
+        pendingLabel="กำลังบันทึก"
+        className="text-sm"
+      >
+        บันทึกการแก้ไข
+      </SubmitButton>
+
+      <LoadingOverlay show={pending} message="กำลังบันทึก" />
     </form>
   );
 }

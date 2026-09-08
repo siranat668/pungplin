@@ -14,7 +14,7 @@ export function VisitCard({ visit }: { visit: VisitWithDetails }) {
   return (
     <Link
       href={`/visit/${visit.id}`}
-      className="card block p-4 transition-colors hover:border-yolk/50"
+      className="card card-interactive block p-4"
     >
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">

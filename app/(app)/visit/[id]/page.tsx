@@ -6,8 +6,9 @@ import { RatingPanel } from "@/components/RatingPanel";
 import { ScoreBadge } from "@/components/ScoreBadge";
 import { VisitEditForm } from "@/components/VisitEditForm";
 import { PEOPLE, PERSON_LABEL, PRICE_LEVELS } from "@/lib/constants";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { deleteVisitAction } from "@/lib/actions/visits";
-import { formatDateLong } from "@/lib/format";
+import { formatDateLong, todayInBangkok } from "@/lib/format";
 import { requirePerson } from "@/lib/identity";
 import { getVisit } from "@/lib/queries";
 import { idSchema } from "@/lib/schemas";
@@ -42,9 +43,22 @@ export default async function VisitPage({ params }: PageProps<"/visit/[id]">) {
   const overall = averageOfRatings(visit.ratings);
 
   return (
-    <div className="space-y-5">
+    <div className="stagger space-y-5">
       <div>
-        <Link href="/feed" className="text-sm text-muted hover:text-ink">
+        <Link
+          href="/feed"
+          className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-ink"
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden>
+            <path
+              d="m14 6-6 6 6 6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
           กลับไปหน้าบันทึก
         </Link>
 
@@ -107,12 +121,14 @@ export default async function VisitPage({ params }: PageProps<"/visit/[id]">) {
         ))}
       </div>
 
-      <details className="card p-4">
-        <summary className="cursor-pointer font-bold">แก้ไขบันทึกครั้งนี้</summary>
-        <div className="mt-4">
-          <VisitEditForm visitId={visit.id} visitedOn={visit.visited_on} note={visit.note} />
-        </div>
-      </details>
+      <Disclosure title="แก้ไขบันทึกครั้งนี้" className="card p-4">
+        <VisitEditForm
+          visitId={visit.id}
+          visitedOn={visit.visited_on}
+          note={visit.note}
+          today={todayInBangkok()}
+        />
+      </Disclosure>
 
       <DangerButton
         action={deleteVisitAction}

@@ -8,6 +8,7 @@ import type Overlay from "ol/Overlay";
 
 import "ol/ol.css";
 
+import { BrandLoader, LoadingDots } from "@/components/ui/BrandLoader";
 import { DEFAULT_MAP_CENTER, OSM_TILE_URL } from "@/lib/constants";
 import { formatScore, scoreFill } from "@/lib/scores";
 
@@ -33,6 +34,8 @@ export function MapOverview({ pins }: { pins: MapPin[] }) {
    * แล้วยิงเนื้อหาเข้าไปด้วย portal แทน
    */
   const [popupBox, setPopupBox] = useState<HTMLDivElement | null>(null);
+  /** true เมื่อโมดูล OpenLayers โหลดเสร็จและวางแผนที่ลงหน้าแล้ว */
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -146,6 +149,7 @@ export function MapOverview({ pins }: { pins: MapPin[] }) {
       mapRef.current = map;
       overlayRef.current = overlay;
       setPopupBox(box);
+      setReady(true);
     })();
 
     return () => {
@@ -156,6 +160,7 @@ export function MapOverview({ pins }: { pins: MapPin[] }) {
       overlayRef.current = null;
       setPopupBox(null);
       setSelected(null);
+      setReady(false);
     };
   }, [pins]);
 
@@ -165,11 +170,25 @@ export function MapOverview({ pins }: { pins: MapPin[] }) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative h-[60vh] min-h-80">
       <div
         ref={containerRef}
-        className="h-[60vh] min-h-80 w-full overflow-hidden rounded-2xl border border-line bg-raised"
+        className="h-full w-full overflow-hidden rounded-2xl border border-line bg-raised transition-opacity duration-500"
+        style={{ opacity: ready ? 1 : 0 }}
       />
+
+      {/* ระหว่างที่ยังโหลด OpenLayers กับ tile ชุดแรกไม่เสร็จ */}
+      {ready ? null : (
+        <div className="absolute inset-0 grid place-items-center rounded-2xl border border-line bg-raised">
+          <div className="flex flex-col items-center gap-3">
+            <BrandLoader size={104} />
+            <span className="flex items-center gap-2 text-sm text-muted">
+              กำลังเปิดแผนที่
+              <LoadingDots />
+            </span>
+          </div>
+        </div>
+      )}
 
       {popupBox && selected
         ? createPortal(
@@ -177,7 +196,7 @@ export function MapOverview({ pins }: { pins: MapPin[] }) {
               <button
                 type="button"
                 onClick={closePopup}
-                className="float-right -mt-1 px-1 text-muted hover:text-ink"
+                className="float-right -mt-1 px-1 text-muted transition-colors hover:text-ink"
                 aria-label="ปิด"
               >
                 ×
